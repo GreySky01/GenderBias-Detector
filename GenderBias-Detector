@@ -1,0 +1,33 @@
+# 安装依赖
+!pip install transformers torch
+
+from transformers import pipeline
+
+# 1. 加载 HuggingFace 已训练好的 "toxic speech" 模型
+classifier = pipeline("text-classification", 
+                      model="unitary/toxic-bert", 
+                      tokenizer="unitary/toxic-bert")
+
+# 2. 定义应对策略
+strategies = {
+    "toxic": "❌ 这句话包含攻击性/歧视内容。建议保持冷静，必要时可以拒绝回应或寻求支持。",
+    "non-toxic": "✅ 未检测到明显的歧视，可以放心交流。"
+}
+
+# 3. 检测函数
+def detect_and_respond(text):
+    result = classifier(text)[0]   # 得到预测结果
+    label = result["label"]        # toxic / non-toxic
+    score = result["score"]        # 置信度
+    response = strategies.get(label, "⚠️ 未知类别")
+    return {"text": text, "label": label, "score": score, "response": response}
+
+# 4. 测试几句话
+sentences = [
+    "女孩子学理工不合适",
+    "你真是个很优秀的人",
+    "男人天生比女人强"
+]
+
+for s in sentences:
+    print(detect_and_respond(s))
